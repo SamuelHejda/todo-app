@@ -15,17 +15,29 @@ class TaskController extends Controller
      * Display a listing of the resource.
      */
     public function index(Request $request)
-    {
-        $query = Task::with('tags');
+{
+    $query = Task::with('tags');
 
-        if ($request->has('tag')) {
-            $query->whereHas('tags', function ($q) use ($request) {
-                $q->where('name', $request->input('tag'));
-            });
-        }
-
-        return $query->get();
+    if ($request->has('tag')) {
+        $query->whereHas('tags', function ($q) use ($request) {
+            $q->where('name', $request->input('tag'));
+        });
     }
+
+    if ($request->has('search')) {
+        $search = $request->input('search');
+        $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+                ->orWhere('description', 'like', "%{$search}%");
+        });
+    }
+
+    if ($request->has('completed')) {
+        $query->where('completed', $request->boolean('completed'));
+    }
+
+    return $query->paginate(10);
+}
 
     /**
      * Store a newly created resource in storage.
